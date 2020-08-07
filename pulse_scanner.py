@@ -18,7 +18,22 @@ def is_keyword(value):
     bool: Whether the value passed is a keyword or not
     """
     return value in [
-
+        "and",
+        "or",
+        "var",
+        "print",
+        "while",
+        "input",
+        "if",
+        "else",
+        "class",
+        "fun",
+        "for",
+        "do",
+        "not",
+        "true",
+        "false",
+        "elif"
     ]
 
 
