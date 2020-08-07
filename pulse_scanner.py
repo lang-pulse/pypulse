@@ -7,6 +7,36 @@ from global_helpers import error, is_alpha, is_alnum, is_digit
 # Module to import Token class
 from token_class import
 
+def is_keyword(value):
+    """
+    Checks if string is keyword or not
+    Params
+    ======
+    value (string) = The string to be checked for keyword
+    Returns
+    =======
+    bool: Whether the value passed is a keyword or not
+    """
+    return value in [
+        "and",
+        "or",
+        "var",
+        "print",
+        "while",
+        "input",
+        "if",
+        "else",
+        "class",
+        "fun",
+        "for",
+        "do",
+        "not",
+        "true",
+        "false",
+        "elif"
+    ]
+
+
 def string_val(source_code, i, table, line_num, start_char='"'):
     """
     Processes string values in the source code
