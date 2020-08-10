@@ -5,7 +5,7 @@ import sys
 from global_helpers import error, is_alpha, is_alnum, is_digit
 
 # Module to import Token class
-from token_class import
+from token_class import Token
 
 def is_keyword(value):
     """
@@ -158,4 +158,109 @@ def numeric_val(source_code, i, table, line_num):
     # Return number token and current index in source code
     return Token("number", id, line_num), i
 
+def checkUnindent(source_code, i, table, line_num):
+    """
+    processes indentation in the source code
+
+    Params
+    ======
+    source_code (string) = The string containing simc source code
+    i           (int)    = The current index in the source code
+    table       (SymbolTable) = Symbol table constructed holding information about identifiers and constants
+    line_num    (int)         = Line number
+
+    Returns
+    =======
+    int: the current position in source code
+    """
+    #checks if the code is indented following ':'
+    global indentLevel, unindentLevel, isIndent, isUnindent
+    if (isIndent):
+        localTabCount = 0
+        while (source_code[i+1] == "\t"):
+            localTabCount += 1
+            i += 1
+        if (source_code[i] == "\t"):
+            i += 1
+        if (localTabCount < indentLevel):
+            isUnindent = True
+            unindentLevel = indentLevel - localTabCount -1
+            if (localTabCount == 0):
+                indentLevel = 0
+            else:
+                indentLevel -= 1
+
+            if (unindentLevel > 0 and localTabCount != 0):
+                if (unindentLevel -1 > 0):
+                    indentLevel = unindentLevel - 1
+                else:
+                    indentLevel = localTabCount
+        
+        if (indentLevel == 0):
+            isIndent = False
+    
+    return i
+
+
+def scanner(filename, table):
+    """
+    Generate tokens from source code
+    Params
+    ======
+    filename    (string)      = The string containing simc source code filename
+    table       (SymbolTable) = Symbol table constructed holding information about identifiers and constants
+    Returns
+    ========
+    list: A list of tokens of the source code, if the code is lexically correct, otherwise
+          presents user with an error
+    """
+
+# List of tokens
+tokens = []
+
+# Line number
+line_num = 1
+
+# Bool to check indentation
+isIndent = False
+isUnindent = False
+
+# Level of indentation
+indentLevel = 0
+unindentLevel = 0
+
+#Loop through the source code character by character
+i = 0
+while source_code[i] != "\0":
+    # If a digit appears, call numeric_val function and add the numeric token to list,
+    # if it was correct
+    if is_digit(source_code[i]):
+        token, i = numeric_val(source_code, i, table, line_num)
+        tokens.append(token)
+
+    # If quote appears the value is a string token
+    elif source_code[i] == '"':
+        token, i = string_val(source_code, i, table, line_num)
+        tokens.append(token)
+
+    # If alphabet or number appears then it might be either a keyword or an identifier
+    elif is_alnum(source_code[i]):
+        token, i = keyword_identifier(source_code, i, table, line_num)
+        tokens.append(token)
+
+    elif (source_code[i] == ":"):
+        isIndent = True
+        indentLevel += 1
+        if (source_code[i+1] == "\n"):
+            line_num += 1
+            i += 1
+            i = checkUnindent(source_code, i, table, line_num)
+        token = Token("begin_block", id, line_num)
+        tokens.append(token)
+
+    elif (source_code[i] == "\n"):
+        line_num += 1
+        i = checkUnindent(source_code, i, table, line_num)
+        token = Token("newline", id, line_num)
+        tokens.append(token)
 
