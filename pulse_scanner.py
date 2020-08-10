@@ -1,11 +1,14 @@
 # Standard library to take input as command line argument
 import sys
 
-# Module to import some helper functions
+# Import some helper functions
 from global_helpers import error, is_alpha, is_alnum, is_digit
 
-# Module to import Token class
+# Import Token class
 from token_class import Token
+
+# Import Scanner class
+from scanner_class import Scanner
 
 def is_keyword(value):
     """
@@ -36,7 +39,7 @@ def is_keyword(value):
         "elif"
     ]
 
-def keyword_identifier(source_code, i, table, line_num):
+def keyword_identifier(source_code, i, table, line_num, scanner):
     """
     Process keywords and identifiers in source code
     Params
@@ -48,7 +51,7 @@ def keyword_identifier(source_code, i, table, line_num):
     Returns
     =======
     Token, int: The token generated for the keyword or identifier and the current position in source code
-    """ 
+    """
     #an empty string is assigned to value"
     value = ""
 
@@ -68,11 +71,10 @@ def keyword_identifier(source_code, i, table, line_num):
     if id == -1:
         id = table.entry(value, "var", "variable")
 
-     
     # Returns the  id, token and current index in source code
     return Token("id", id, line_num), i
 
-def string_val(source_code, i, table, line_num, start_char='"'):
+def string_val(source_code, i, table, line_num, scanner, start_char='"'):
     """
     Processes string values in the source code
     Params
@@ -91,6 +93,7 @@ def string_val(source_code, i, table, line_num, start_char='"'):
 
     # Skip the first "/' so that the string atleast makes into the while loop
     i += 1
+    print(source_code[i:])
 
     # Loop until we get a non-digit character
     while source_code[i] != start_char:
@@ -112,7 +115,7 @@ def string_val(source_code, i, table, line_num, start_char='"'):
     # Return string token and current index in source code
     return Token("string", id, line_num), i
 
-def numeric_val(source_code, i, table, line_num):
+def numeric_val(source_code, i, table, line_num, scanner):
     """
     Processes numeric values in the source code
     Params
@@ -158,7 +161,7 @@ def numeric_val(source_code, i, table, line_num):
     # Return number token and current index in source code
     return Token("number", id, line_num), i
 
-def checkUnindent(source_code, i, table, line_num):
+def checkUnindent(source_code, i, table, line_num, scanner):
     """
     processes indentation in the source code
 
@@ -174,35 +177,36 @@ def checkUnindent(source_code, i, table, line_num):
     int: the current position in source code
     """
     #checks if the code is indented following ':'
-    global indentLevel, unindentLevel, isIndent, isUnindent
-    if (isIndent):
+    if (scanner.isIndent):
         localTabCount = 0
         while (source_code[i+1] == "\t"):
             localTabCount += 1
             i += 1
         if (source_code[i] == "\t"):
             i += 1
-        if (localTabCount < indentLevel):
-            isUnindent = True
-            unindentLevel = indentLevel - localTabCount -1
+        if (localTabCount < scanner.indentLevel):
+            scanner.isUnindent = True
+            scanner.unindentLevel = scanner.indentLevel - localTabCount - 1
             if (localTabCount == 0):
-                indentLevel = 0
+                scanner.indentLevel = 0
             else:
-                indentLevel -= 1
+                scanner.indentLevel -= 1
 
-            if (unindentLevel > 0 and localTabCount != 0):
-                if (unindentLevel -1 > 0):
-                    indentLevel = unindentLevel - 1
+            if (scanner.unindentLevel > 0 and localTabCount != 0):
+                if (scanner.unindentLevel -1 > 0):
+                    scanner.indentLevel = scanner.unindentLevel - 1
                 else:
-                    indentLevel = localTabCount
-        
-        if (indentLevel == 0):
-            isIndent = False
-    
+                    scanner.indentLevel = localTabCount
+
+        if (scanner.indentLevel == 0):
+            scanner.isIndent = False
+    else:
+        i += 1
+
     return i
 
 
-def scanner(filename, table):
+def scanner(source_code, table):
     """
     Generate tokens from source code
     Params
@@ -215,52 +219,49 @@ def scanner(filename, table):
           presents user with an error
     """
 
-# List of tokens
-tokens = []
+    # Create scanner class' object
+    scanner = Scanner()
 
-# Line number
-line_num = 1
+    #Loop through the source code character by character
+    i = 0
+    while source_code[i] != "\0":
+        # If a digit appears, call numeric_val function and add the numeric token to list,
+        # if it was correct
+        if is_digit(source_code[i]):
+            token, i = numeric_val(source_code, i, table, scanner.line_num, scanner)
+            scanner.tokens.append(token)
 
-# Bool to check indentation
-isIndent = False
-isUnindent = False
+        # If quote appears the value is a string token
+        elif source_code[i] == '"':
+            token, i = string_val(source_code, i, table, scanner.line_num, scanner)
+            scanner.tokens.append(token)
 
-# Level of indentation
-indentLevel = 0
-unindentLevel = 0
+        elif source_code[i] == '\'':
+            token, i = string_val(source_code, i, table, scanner.line_num, scanner, '\'')
+            scanner.tokens.append(token)
 
-#Loop through the source code character by character
-i = 0
-while source_code[i] != "\0":
-    # If a digit appears, call numeric_val function and add the numeric token to list,
-    # if it was correct
-    if is_digit(source_code[i]):
-        token, i = numeric_val(source_code, i, table, line_num)
-        tokens.append(token)
+        # If alphabet or number appears then it might be either a keyword or an identifier
+        elif is_alnum(source_code[i]):
+            token, i = keyword_identifier(source_code, i, table, scanner.line_num, scanner)
+            scanner.tokens.append(token)
 
-    # If quote appears the value is a string token
-    elif source_code[i] == '"':
-        token, i = string_val(source_code, i, table, line_num)
-        tokens.append(token)
+        elif (source_code[i] == ":"):
+            scanner.isIndent = True
+            scanner.indentLevel += 1
+            if (source_code[i+1] == "\n"):
+                scanner.line_num += 1
+                i += 1
+                i = checkUnindent(source_code, i, table, scanner.line_num, scanner)
+            token = Token("begin_block", "", scanner.line_num)
+            scanner.tokens.append(token)
 
-    # If alphabet or number appears then it might be either a keyword or an identifier
-    elif is_alnum(source_code[i]):
-        token, i = keyword_identifier(source_code, i, table, line_num)
-        tokens.append(token)
+        elif (source_code[i] == "\n"):
+            scanner.line_num += 1
+            i = checkUnindent(source_code, i, table, scanner.line_num, scanner)
+            token = Token("newline", "", scanner.line_num)
+            scanner.tokens.append(token)
 
-    elif (source_code[i] == ":"):
-        isIndent = True
-        indentLevel += 1
-        if (source_code[i+1] == "\n"):
-            line_num += 1
+        else:
             i += 1
-            i = checkUnindent(source_code, i, table, line_num)
-        token = Token("begin_block", id, line_num)
-        tokens.append(token)
 
-    elif (source_code[i] == "\n"):
-        line_num += 1
-        i = checkUnindent(source_code, i, table, line_num)
-        token = Token("newline", id, line_num)
-        tokens.append(token)
-
+    return scanner.tokens
