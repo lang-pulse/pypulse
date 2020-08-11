@@ -164,14 +164,14 @@ def numeric_val(source_code, i, table, line_num, scanner):
 def checkUnindent(source_code, i, table, line_num, scanner):
     """
     processes indentation in the source code
-
+    
     Params
     ======
     source_code (string) = The string containing simc source code
     i           (int)    = The current index in the source code
     table       (SymbolTable) = Symbol table constructed holding information about identifiers and constants
     line_num    (int)         = Line number
-
+    
     Returns
     =======
     int: the current position in source code
@@ -209,10 +209,12 @@ def checkUnindent(source_code, i, table, line_num, scanner):
 def scanner(source_code, table):
     """
     Generate tokens from source code
+    
     Params
     ======
     filename    (string)      = The string containing simc source code filename
     table       (SymbolTable) = Symbol table constructed holding information about identifiers and constants
+    
     Returns
     ========
     list: A list of tokens of the source code, if the code is lexically correct, otherwise
@@ -224,6 +226,13 @@ def scanner(source_code, table):
 
     #Loop through the source code character by character
     i = 0
+    
+    # maintain the count of all the paranthesis
+    parantheses_count = 0
+
+    #To store comments string
+    comment_str = ""
+    
     while source_code[i] != "\0":
         # If a digit appears, call numeric_val function and add the numeric token to list,
         # if it was correct
@@ -261,7 +270,151 @@ def scanner(source_code, table):
             token = Token("newline", "", scanner.line_num)
             scanner.tokens.append(token)
 
-        else:
+        elif source_code[i] == "(":
+            parantheses_count += 1
+            scanner.tokens.append(Token("left_paren", "", scanner.line_num))
             i += 1
 
+        elif source_code[i] == ")":
+            if(parantheses_count > 0):
+                parantheses_count -= 1
+
+            scanner.tokens.append(Token("right_paren", "", scanner.line_num))
+
+            if(parantheses_count == 0):
+                scanner.tokens.append(Token("call_end", "", scanner.line_num))
+
+            i += 1
+
+        # Identifying Left brace token
+        elif (source_code[i] == "{"):
+            scanner.tokens.append(Token("left_brace" , "" , scanner.line_num))
+            i += 1
+        
+        # Identifying right brace token
+        elif (source_code[i] == "}"):
+            scanner.tokens.append(Token("right_brace" , "" , scanner.line_num))
+            i += 1
+        
+        #Identifying assignment or equal token
+        elif (source_code[i] == "="):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("equal", "", scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("assignment" , "" , scanner.line_num))
+                i += 1
+        # Identifying plus_equal, increment or plus token
+        elif (source_code[i] == "+"):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("plus_equal", "" , scanner.line_num))
+                i += 2
+            elif (source_code[i+1] == "+"):
+                scanner.tokens.append(Token("increment", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("plus", "" , scanner.line_num))
+                i += 1
+        
+        # Identifying minus_equal, decrement or minus token
+        elif (source_code[i] == "-"):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("minus_equal", "" , scanner.line_num))
+                i += 2
+            elif (source_code[i+1] == "-"):
+                scanner.tokens.append(Token("decrement", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("minus", "" , scanner.line_num))
+                i += 1
+        
+        # Identifying multiply_equal or multiply token
+        elif (source_code[i] == "*"):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("multiply_equal", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("multiply", "" , scanner.line_num))
+                i += 1
+
+        #Identifying single_line_comment token
+        elif(source_code[i] == "#"):
+            i += 1
+            while source_code[i] != "\n":
+                comment_str += str(source_code[i])
+                i += 1
+            scanner.tokens.append(Token("single_line_comment", comment_str , scanner.line_num))
+            comment_str = ""
+        
+        #Identifying multi_line_comment, divide_equal,integer_divide, divide token
+        elif (source_code[i] == "/"):
+            if(source_code[i+1] == "*"):
+                i += 2
+                while(source_code[i] != "*" and source_code[i+1] != "/"):
+                    comment_str += str(source_code[i])
+                    i += 1
+                scanner.tokens.append(Token("multi_line_comment" , comment_str, scanner.line_num))
+                comment_str = ""
+            elif (source_code[i+1] == "="):
+                scanner.tokens.append(Token("divide_equal", "" , scanner.line_num))
+                i += 2
+            
+            elif (source_code[i+1] = "/"):
+                scanner.tokens.append(Token("integer_divide", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("divide", "" , scanner.line_num))
+                i += 1
+
+        # Identifying modulus_equal or modulus token
+        elif (source_code[i] == "%"):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("modulus_equal", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("modulus", "" , scanner.line_num))
+                i += 1
+
+        # Identifying comma token
+        elif (source_code[i] == ","):
+            scanner.tokens.append(Token("comma" , "" , scanner.line_num))
+            i += 1
+        
+        # Identifying not_equal token
+        elif (source_code[i] == "!" and source_code[i+1] == "="):
+            scanner.tokens.append(Token("not_equal" , "" , scanner.line_num))
+            i += 2
+
+        #Identifying greater_than or greater_than_equal token
+        elif (source_code[i] == ">"):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("greater_than_equal", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("greater_than" , "" , scanner.line_num))
+                i +=1 
+        
+        #Identifying less_than or less_than_equal to token
+        elif (source_code[i] == "<"):
+            if (source_code[i+1] == "="):
+                scanner.tokens.append(Token("less_than_equal", "" , scanner.line_num))
+                i += 2
+            else:
+                scanner.tokens.append(Token("less_than" , "" , scanner.line_num))
+                i +=1
+
+        #Identifying the token_left_bracket
+        elif(source_code[i]== "["):
+            scanner.tokens.append(Token("token_left_bracket", "", scanner.line_num))
+            i += 1
+        
+        #Identifying the token_right_bracket 
+        elif(source_code[i]== "]"):
+            scanner.tokens.append(Token("token_right_bracket", "", scanner.line_num))
+            i += 1
+
+        #If nothing is matched then increment the index
+        else:
+            i += 1
+    # Return the generated tokens
     return scanner.tokens
