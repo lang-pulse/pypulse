@@ -175,14 +175,13 @@ def checkUnindent(source_code, i, table, line_num, scanner):
     """
     #checks if the code is indented following ':'
     if (scanner.isIndent):
-        print(ord(source_code[i+1]))
         localTabCount = 0
         while (source_code[i+1] == "\t"):
             localTabCount += 1
             i += 1
         if (source_code[i] == "\t"):
+            localTabCount += 1
             i += 1
-        print(localTabCount, scanner.indentLevel)
         if (localTabCount < scanner.indentLevel):
             scanner.isUnindent = True
             scanner.unindentLevel = scanner.indentLevel - localTabCount - 1
@@ -196,6 +195,7 @@ def checkUnindent(source_code, i, table, line_num, scanner):
                     scanner.indentLevel = scanner.unindentLevel - 1
                 else:
                     scanner.indentLevel = localTabCount
+        print(localTabCount, scanner.indentLevel, scanner.unindentLevel, scanner.isIndent, scanner.isUnindent)
 
         if (scanner.indentLevel == 0):
             scanner.isIndent = False
