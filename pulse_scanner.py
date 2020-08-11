@@ -93,7 +93,6 @@ def string_val(source_code, i, table, line_num, scanner, start_char='"'):
 
     # Skip the first "/' so that the string atleast makes into the while loop
     i += 1
-    print(source_code[i:])
 
     # Loop until we get a non-digit character
     while source_code[i] != start_char:
@@ -176,12 +175,14 @@ def checkUnindent(source_code, i, table, line_num, scanner):
     """
     #checks if the code is indented following ':'
     if (scanner.isIndent):
+        print(ord(source_code[i+1]))
         localTabCount = 0
         while (source_code[i+1] == "\t"):
             localTabCount += 1
             i += 1
         if (source_code[i] == "\t"):
             i += 1
+        print(localTabCount, scanner.indentLevel)
         if (localTabCount < scanner.indentLevel):
             scanner.isUnindent = True
             scanner.unindentLevel = scanner.indentLevel - localTabCount - 1
@@ -225,7 +226,7 @@ def scanner(source_code, table):
 
     #To store comments string
     comment_str = ""
-    
+
     while source_code[i] != "\0":
         # If a digit appears, call numeric_val function and add the numeric token to list,
         # if it was correct
@@ -255,6 +256,8 @@ def scanner(source_code, table):
                 i += 1
                 i = checkUnindent(source_code, i, table, scanner_obj.line_num, scanner_obj)
             token = Token("begin_block", "", scanner_obj.line_num)
+            scanner_obj.tokens.append(token)
+            token = Token("indent", "", scanner_obj.line_num + 1)
             scanner_obj.tokens.append(token)
 
         elif (source_code[i] == "\n"):

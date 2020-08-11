@@ -1,2 +1,3 @@
-var a = 1 + 2
-print(a)
+var a = 1
+while(a < 10):
+  print("Hello")
