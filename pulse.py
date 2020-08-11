@@ -1,6 +1,11 @@
 #The module for system-specific parameters and functions
 import sys
 
+# Import SymbolTable class
+from symbol_table_class import SymbolTable
+
+# Import scanner
+from pulse_scanner import scanner
 
 def readFile(path):
     """
@@ -39,7 +44,14 @@ file_path = sys.argv[1]
 # Get the source code form code file
 source_code = readFile(file_path)
 
-# TODO: Pass source code to lexical analyzer
+# Create symbol table
+table = SymbolTable()
+
+# Pass source code to lexical analyzer
+tokens = scanner(source_code, table)
+
+for token in tokens:
+    print(token)
 
 # TODO: Pass tokens into parser and compiler
 

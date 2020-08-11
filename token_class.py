@@ -20,7 +20,6 @@ class Token:
         """
 
         self.type = type
-        self.typedig = self.token2dig(type)
         self.val = val
         self.line_num = line_num
 
