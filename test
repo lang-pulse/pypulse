@@ -1,3 +1,10 @@
 var a = 1
 while(a < 10):
   print("Hello")
+  while(a):
+    print("World")
+    while(a):
+      print("Foo")
+      while(a):
+        print("baz")
+print("Hello")
