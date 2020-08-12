@@ -14,7 +14,7 @@ def readFile(path):
 
     Params
     ======
-    path (string) : PAth to file which is to be read
+    path (string) : Path to file which is to be read
 
     Returns
     =======
