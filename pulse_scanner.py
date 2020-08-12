@@ -10,6 +10,7 @@ from token_class import Token
 # Import Scanner class
 from scanner_class import Scanner
 
+
 def is_keyword(value):
     """
     Checks if string is keyword or not
@@ -36,8 +37,9 @@ def is_keyword(value):
         "not",
         "true",
         "false",
-        "elif"
+        "elif",
     ]
+
 
 def keyword_identifier(source_code, i, table, line_num, scanner_obj):
     """
@@ -52,7 +54,7 @@ def keyword_identifier(source_code, i, table, line_num, scanner_obj):
     =======
     Token, int: The token generated for the keyword or identifier and the current position in source code
     """
-    #an empty string is assigned to value"
+    # an empty string is assigned to value"
     value = ""
 
     # Loop until we get a non-digit character
@@ -73,6 +75,7 @@ def keyword_identifier(source_code, i, table, line_num, scanner_obj):
 
     # Returns the  id, token and current index in source code
     return Token("id", id, line_num), i
+
 
 def string_val(source_code, i, table, line_num, scanner_obj, start_char='"'):
     """
@@ -114,6 +117,7 @@ def string_val(source_code, i, table, line_num, scanner_obj, start_char='"'):
     # Return string token and current index in source code
     return Token("string", id, line_num), i
 
+
 def numeric_val(source_code, i, table, line_num, scanner_obj):
     """
     Processes numeric values in the source code
@@ -140,7 +144,8 @@ def numeric_val(source_code, i, table, line_num, scanner_obj):
     if numeric_constant.count(".") > 1:
         error(
             "Invalid numeric constant, cannot have more than one decimal point in a"
-            " number!" , line_num
+            " number!",
+            line_num,
         )
 
     # Check the length after . to distinguish between float and double
@@ -160,6 +165,7 @@ def numeric_val(source_code, i, table, line_num, scanner_obj):
     # Return number token and current index in source code
     return Token("number", id, line_num), i
 
+
 def checkUnindent(source_code, i, table, line_num, scanner_obj):
     """
     processes indentation in the source code
@@ -173,33 +179,34 @@ def checkUnindent(source_code, i, table, line_num, scanner_obj):
     =======
     int: the current position in source code
     """
-    #checks if the code is indented following ':'
-    if (scanner_obj.isIndent):
+    # checks if the code is indented following ':'
+    if scanner_obj.isIndent:
         localTabCount = 0
         localSpaceCount = 0
-        while (source_code[i] == "\t"):
+        while source_code[i] == "\t":
             localTabCount += 1
             i += 1
-        while(source_code[i] == " "):
+        while source_code[i] == " ":
             localSpaceCount += 1
             i += 1
 
         localTabCount = localSpaceCount // 2 if localTabCount == 0 else localTabCount
 
-        if (localTabCount < scanner_obj.indentLevel):
+        if localTabCount < scanner_obj.indentLevel:
             scanner_obj.isUnindent = True
             scanner_obj.unindentLevel = scanner_obj.indentLevel - localTabCount
 
-        if (scanner_obj.indentLevel == 0):
+        if scanner_obj.indentLevel == 0:
             scanner_obj.isIndent = False
 
     return i
 
+
 def gen_unindent(scanner_obj):
 
-    if(scanner_obj.unindentLevel > 0):
+    if scanner_obj.unindentLevel > 0:
         print("Here-", scanner_obj.indentLevel)
-        while(scanner_obj.unindentLevel != 0):
+        while scanner_obj.unindentLevel != 0:
             token = Token("unindent", "", scanner_obj.line_num)
             scanner_obj.tokens.append(token)
 
@@ -225,50 +232,56 @@ def scanner(source_code, table):
     # Create scanner_obj class' object
     scanner_obj = Scanner()
 
-    #Loop through the source code character by character
+    # Loop through the source code character by character
     i = 0
 
-    #To store comments string
+    # To store comments string
     comment_str = ""
 
     while source_code[i] != "\0":
         # If a digit appears, call numeric_val function and add the numeric token to list,
         # if it was correct
         if is_digit(source_code[i]):
-            token, i = numeric_val(source_code, i, table, scanner_obj.line_num, scanner_obj)
+            token, i = numeric_val(
+                source_code, i, table, scanner_obj.line_num, scanner_obj
+            )
             scanner_obj.tokens.append(token)
 
         # If quote appears the value is a string token
         elif source_code[i] == '"':
-            token, i = string_val(source_code, i, table, scanner_obj.line_num, scanner_obj)
+            token, i = string_val(
+                source_code, i, table, scanner_obj.line_num, scanner_obj
+            )
             scanner_obj.tokens.append(token)
 
-        elif source_code[i] == '\'':
-            token, i = string_val(source_code, i, table, scanner_obj.line_num, scanner_obj, '\'')
+        elif source_code[i] == "'":
+            token, i = string_val(
+                source_code, i, table, scanner_obj.line_num, scanner_obj, "'"
+            )
             scanner_obj.tokens.append(token)
 
         # If alphabet or number appears then it might be either a keyword or an identifier
         elif is_alnum(source_code[i]):
-            token, i = keyword_identifier(source_code, i, table, scanner_obj.line_num, scanner_obj)
+            token, i = keyword_identifier(
+                source_code, i, table, scanner_obj.line_num, scanner_obj
+            )
             scanner_obj.tokens.append(token)
 
-        elif (source_code[i] == ":"):
+        elif source_code[i] == ":":
             token = Token("begin_block", "", scanner_obj.line_num)
             scanner_obj.tokens.append(token)
             scanner_obj.isIndent = True
             scanner_obj.indentLevel += 1
             i += 1
 
-        elif (source_code[i] == "\n"):
+        elif source_code[i] == "\n":
             scanner_obj.line_num += 1
             token = Token("newline", "", scanner_obj.line_num)
             scanner_obj.tokens.append(token)
-            i = checkUnindent(source_code, i+1, table, scanner_obj.line_num, scanner_obj)
+            i = checkUnindent(
+                source_code, i + 1, table, scanner_obj.line_num, scanner_obj
+            )
             gen_unindent(scanner_obj)
-
-        # elif (source_code[i+1] == "\t"):
-        #     token = Token("indent", "", scanner_obj.line_num + 1)
-        #     scanner_obj.tokens.append(token)
 
         elif source_code[i] == "(":
             scanner_obj.tokens.append(Token("left_paren", "", scanner_obj.line_num))
@@ -279,138 +292,162 @@ def scanner(source_code, table):
             i += 1
 
         # Identifying Left brace token
-        elif (source_code[i] == "{"):
-            scanner_obj.tokens.append(Token("left_brace" , "" , scanner_obj.line_num))
+        elif source_code[i] == "{":
+            scanner_obj.tokens.append(Token("left_brace", "", scanner_obj.line_num))
             i += 1
 
         # Identifying right brace token
-        elif (source_code[i] == "}"):
-            scanner_obj.tokens.append(Token("right_brace" , "" , scanner_obj.line_num))
+        elif source_code[i] == "}":
+            scanner_obj.tokens.append(Token("right_brace", "", scanner_obj.line_num))
             i += 1
 
-        #Identifying assignment or equal token
-        elif (source_code[i] == "="):
-            if (source_code[i+1] == "="):
+        # Identifying assignment or equal token
+        elif source_code[i] == "=":
+            if source_code[i + 1] == "=":
                 scanner_obj.tokens.append(Token("equal", "", scanner_obj.line_num))
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("assignment" , "" , scanner_obj.line_num))
+                scanner_obj.tokens.append(Token("assignment", "", scanner_obj.line_num))
                 i += 1
         # Identifying plus_equal, increment or plus token
-        elif (source_code[i] == "+"):
-            if (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("plus_equal", "" , scanner_obj.line_num))
+        elif source_code[i] == "+":
+            if source_code[i + 1] == "=":
+                scanner_obj.tokens.append(Token("plus_equal", "", scanner_obj.line_num))
                 i += 2
-            elif (source_code[i+1] == "+"):
-                scanner_obj.tokens.append(Token("increment", "" , scanner_obj.line_num))
+            elif source_code[i + 1] == "+":
+                scanner_obj.tokens.append(Token("increment", "", scanner_obj.line_num))
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("plus", "" , scanner_obj.line_num))
+                scanner_obj.tokens.append(Token("plus", "", scanner_obj.line_num))
                 i += 1
 
         # Identifying minus_equal, decrement or minus token
-        elif (source_code[i] == "-"):
-            if (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("minus_equal", "" , scanner_obj.line_num))
+        elif source_code[i] == "-":
+            if source_code[i + 1] == "=":
+                scanner_obj.tokens.append(
+                    Token("minus_equal", "", scanner_obj.line_num)
+                )
                 i += 2
-            elif (source_code[i+1] == "-"):
-                scanner_obj.tokens.append(Token("decrement", "" , scanner_obj.line_num))
+            elif source_code[i + 1] == "-":
+                scanner_obj.tokens.append(Token("decrement", "", scanner_obj.line_num))
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("minus", "" , scanner_obj.line_num))
+                scanner_obj.tokens.append(Token("minus", "", scanner_obj.line_num))
                 i += 1
 
         # Identifying multiply_equal or multiply token
-        elif (source_code[i] == "*"):
-            if (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("multiply_equal", "" , scanner_obj.line_num))
+        elif source_code[i] == "*":
+            if source_code[i + 1] == "=":
+                scanner_obj.tokens.append(
+                    Token("multiply_equal", "", scanner_obj.line_num)
+                )
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("multiply", "" , scanner_obj.line_num))
+                scanner_obj.tokens.append(Token("multiply", "", scanner_obj.line_num))
                 i += 1
 
-        #Identifying single_line_comment token
-        elif(source_code[i] == "#"):
+        # Identifying single_line_comment token
+        elif source_code[i] == "#":
             i += 1
             while source_code[i] != "\n":
                 comment_str += str(source_code[i])
                 i += 1
-            scanner_obj.tokens.append(Token("single_line_comment", comment_str , scanner_obj.line_num))
+            scanner_obj.tokens.append(
+                Token("single_line_comment", comment_str, scanner_obj.line_num)
+            )
             comment_str = ""
 
-        #Identifying multi_line_comment, divide_equal,integer_divide, divide token
-        elif (source_code[i] == "/"):
-            if(source_code[i+1] == "*"):
+        # Identifying multi_line_comment, divide_equal,integer_divide, divide token
+        elif source_code[i] == "/":
+            if source_code[i + 1] == "*":
                 i += 2
-                while(source_code[i] != "*" and source_code[i+1] != "/"):
+                while source_code[i] != "*" and source_code[i + 1] != "/":
                     comment_str += str(source_code[i])
                     i += 1
-                scanner_obj.tokens.append(Token("multi_line_comment" , comment_str, scanner_obj.line_num))
+                scanner_obj.tokens.append(
+                    Token("multi_line_comment", comment_str, scanner_obj.line_num)
+                )
                 comment_str = ""
-            elif (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("divide_equal", "" , scanner_obj.line_num))
+            elif source_code[i + 1] == "=":
+                scanner_obj.tokens.append(
+                    Token("divide_equal", "", scanner_obj.line_num)
+                )
                 i += 2
 
-            elif (source_code[i+1] == "/"):
-                scanner_obj.tokens.append(Token("integer_divide", "" , scanner_obj.line_num))
+            elif source_code[i + 1] == "/":
+                scanner_obj.tokens.append(
+                    Token("integer_divide", "", scanner_obj.line_num)
+                )
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("divide", "" , scanner_obj.line_num))
+                scanner_obj.tokens.append(Token("divide", "", scanner_obj.line_num))
                 i += 1
 
         # Identifying modulus_equal or modulus token
-        elif (source_code[i] == "%"):
-            if (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("modulus_equal", "" , scanner_obj.line_num))
+        elif source_code[i] == "%":
+            if source_code[i + 1] == "=":
+                scanner_obj.tokens.append(
+                    Token("modulus_equal", "", scanner_obj.line_num)
+                )
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("modulus", "" , scanner_obj.line_num))
+                scanner_obj.tokens.append(Token("modulus", "", scanner_obj.line_num))
                 i += 1
 
         # Identifying comma token
-        elif (source_code[i] == ","):
-            scanner_obj.tokens.append(Token("comma" , "" , scanner_obj.line_num))
+        elif source_code[i] == ",":
+            scanner_obj.tokens.append(Token("comma", "", scanner_obj.line_num))
             i += 1
 
         # Identifying not_equal token
-        elif (source_code[i] == "!" and source_code[i+1] == "="):
-            scanner_obj.tokens.append(Token("not_equal" , "" , scanner_obj.line_num))
+        elif source_code[i] == "!" and source_code[i + 1] == "=":
+            scanner_obj.tokens.append(Token("not_equal", "", scanner_obj.line_num))
             i += 2
 
-        #Identifying greater_than or greater_than_equal token
-        elif (source_code[i] == ">"):
-            if (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("greater_than_equal", "" , scanner_obj.line_num))
+        # Identifying greater_than or greater_than_equal token
+        elif source_code[i] == ">":
+            if source_code[i + 1] == "=":
+                scanner_obj.tokens.append(
+                    Token("greater_than_equal", "", scanner_obj.line_num)
+                )
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("greater_than" , "" , scanner_obj.line_num))
-                i +=1
+                scanner_obj.tokens.append(
+                    Token("greater_than", "", scanner_obj.line_num)
+                )
+                i += 1
 
-        #Identifying less_than or less_than_equal to token
-        elif (source_code[i] == "<"):
-            if (source_code[i+1] == "="):
-                scanner_obj.tokens.append(Token("less_than_equal", "" , scanner_obj.line_num))
+        # Identifying less_than or less_than_equal to token
+        elif source_code[i] == "<":
+            if source_code[i + 1] == "=":
+                scanner_obj.tokens.append(
+                    Token("less_than_equal", "", scanner_obj.line_num)
+                )
                 i += 2
             else:
-                scanner_obj.tokens.append(Token("less_than" , "" , scanner_obj.line_num))
-                i +=1
+                scanner_obj.tokens.append(Token("less_than", "", scanner_obj.line_num))
+                i += 1
 
-        #Identifying the token_left_bracket
-        elif(source_code[i]== "["):
-            scanner_obj.tokens.append(Token("token_left_bracket", "", scanner_obj.line_num))
+        # Identifying the token_left_bracket
+        elif source_code[i] == "[":
+            scanner_obj.tokens.append(
+                Token("token_left_bracket", "", scanner_obj.line_num)
+            )
             i += 1
 
-        #Identifying the token_right_bracket
-        elif(source_code[i]== "]"):
-            scanner_obj.tokens.append(Token("token_right_bracket", "", scanner_obj.line_num))
+        # Identifying the token_right_bracket
+        elif source_code[i] == "]":
+            scanner_obj.tokens.append(
+                Token("token_right_bracket", "", scanner_obj.line_num)
+            )
             i += 1
 
-        #If nothing is matched then increment the index
+        # If nothing is matched then increment the index
         else:
             i += 1
 
-    if(scanner_obj.indentLevel > 0):
-        while(scanner_obj.indentLevel != 0):
+    if scanner_obj.indentLevel > 0:
+        while scanner_obj.indentLevel != 0:
             token = Token("unindent", "", scanner_obj.line_num)
             scanner_obj.tokens.append(token)
 

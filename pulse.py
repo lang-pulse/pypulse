@@ -1,4 +1,4 @@
-#The module for system-specific parameters and functions
+# The module for system-specific parameters and functions
 import sys
 
 # Import SymbolTable class
@@ -6,6 +6,7 @@ from symbol_table_class import SymbolTable
 
 # Import scanner
 from pulse_scanner import scanner
+
 
 def readFile(path):
     """
@@ -27,10 +28,10 @@ def readFile(path):
         sys.stderr.write("Could not open %s" % (path))
         exit(74)
 
-    #reading the file
+    # reading the file
     if file.mode == "r":
         buffer = file.read()
-        #Add a EOF token to end of source code
+        # Add a EOF token to end of source code
         buffer += "\0"
 
     file.close()

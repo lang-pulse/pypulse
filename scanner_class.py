@@ -1,5 +1,4 @@
 class Scanner:
-
     def __init__(self):
         self.tokens = []
         self.line_num = 1
