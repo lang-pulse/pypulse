@@ -176,13 +176,13 @@ def checkUnindent(source_code, i, table, line_num, scanner):
     #checks if the code is indented following ':'
     if (scanner.isIndent):
         localTabCount = 0
-        while (source_code[i+1] == "\t"):
+        while (source_code[i] == "\t"):
             localTabCount += 1
             i += 1
-        if (source_code[i+1] == " " and source_code[i+2] == " "):
+        if (source_code[i] == " " and source_code[i+1] == " "):
             localTabCount += 1
             i += 1
-        print(localTabCount, scanner.indentLevel)
+
         if (localTabCount < scanner.indentLevel):
             scanner.isUnindent = True
             scanner.unindentLevel = scanner.indentLevel - localTabCount - 1
@@ -196,8 +196,6 @@ def checkUnindent(source_code, i, table, line_num, scanner):
                     scanner.indentLevel = scanner.unindentLevel - 1
                 else:
                     scanner.indentLevel = localTabCount
-            token = Token("unindent", "", scanner.line_num)
-            scanner.tokens.append(token)
 
         if (scanner.indentLevel == 0):
             scanner.isIndent = False
@@ -205,6 +203,17 @@ def checkUnindent(source_code, i, table, line_num, scanner):
         i += 1
 
     return i
+
+def gen_unindent(scanner_obj):
+
+    if(scanner_obj.unindentLevel > 0):
+        while(scanner_obj.unindentLevel != 0):
+            token = Token("unindent", "", scascanner_objnner.line_num)
+            scanner_obj.tokens.append(token)
+
+            scanner_obj.unindentLevel -= 1
+
+        scanner_obj.isIndent = False
 
 
 def scanner(source_code, table):
@@ -255,19 +264,14 @@ def scanner(source_code, table):
             scanner_obj.tokens.append(token)
             scanner_obj.isIndent = True
             scanner_obj.indentLevel += 1
-            if (source_code[i+1] == "\n"):
-                scanner_obj.line_num += 1
-                
-                i += 1
-                
-                i = checkUnindent(source_code, i, table, scanner_obj.line_num, scanner_obj)
-                token = Token("newline", "", scanner_obj.line_num)
-                scanner_obj.tokens.append(token)
-            
+            i += 1
 
         elif (source_code[i] == "\n"):
+            print(i, ord(source_code[i]))
             scanner_obj.line_num += 1
-            i = checkUnindent(source_code, i, table, scanner_obj.line_num, scanner_obj)
+            i = checkUnindent(source_code, i+1, table, scanner_obj.line_num, scanner_obj)
+            gen_unindent(scanner_obj)
+            print(i, ord(source_code[i]))
             token = Token("newline", "", scanner_obj.line_num)
             scanner_obj.tokens.append(token)
 
